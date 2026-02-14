@@ -10,7 +10,7 @@ type WorkflowData struct {
 type TaskStatusData struct {
 	TaskName   string
 	Status     string
-	CreateDate string
+	UpdateDate string
 }
 
 type TaskMemory struct {
@@ -41,7 +41,7 @@ func (tm *TaskMemory) GetTasks(workflowID string) []TaskStatusData {
 	return tm.workflowTaskRepo[workflowID].Task
 }
 
-func (tm *TaskMemory) UpdateTaskStatus(workflowID string, taskName string, newStatus string) {
+func (tm *TaskMemory) UpdateTaskStatus(workflowID string, taskName string, newStatus string, updateDate string) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -49,6 +49,7 @@ func (tm *TaskMemory) UpdateTaskStatus(workflowID string, taskName string, newSt
 	for i, task := range tasks.Task {
 		if task.TaskName == taskName {
 			tasks.Task[i].Status = newStatus
+			tasks.Task[i].UpdateDate = updateDate
 			break
 		}
 	}
