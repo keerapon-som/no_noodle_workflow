@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"no-noodle-workflow-client/packages/api"
+
+	"github.com/keerapon-som/no_noodle_workflow/packages/api"
 
 	"sync"
 
-	httpCatchup "no-noodle-workflow-client/http"
+	httpCatchup "github.com/keerapon-som/no_noodle_workflow/http"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/sync/errgroup"

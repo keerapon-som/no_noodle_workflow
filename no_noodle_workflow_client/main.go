@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"no-noodle-workflow-client/packages/api"
-	"no-noodle-workflow-client/packages/entitites"
-	"no-noodle-workflow-client/service"
+
+	"github.com/keerapon-som/no_noodle_workflow/packages/api"
+	"github.com/keerapon-som/no_noodle_workflow/packages/entitites"
+	"github.com/keerapon-som/no_noodle_workflow/service"
 )
 
 func handler(noodleJobClient api.NoodleJobClient, job entitites.Job) error {

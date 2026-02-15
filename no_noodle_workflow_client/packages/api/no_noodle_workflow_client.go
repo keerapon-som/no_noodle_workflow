@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"no-noodle-workflow-client/packages/entitites"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/keerapon-som/no_noodle_workflow/packages/entitites"
 )
 
 type ProcessRegistry struct {
