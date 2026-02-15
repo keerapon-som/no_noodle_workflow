@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/keerapon-som/no_noodle_workflow/core/api"
-	"github.com/keerapon-som/no_noodle_workflow/core/config"
-	"github.com/keerapon-som/no_noodle_workflow/core/msgbroker"
-	"github.com/keerapon-som/no_noodle_workflow/core/repository"
-	"github.com/keerapon-som/no_noodle_workflow/core/service"
-	"github.com/keerapon-som/no_noodle_workflow/core/util"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/api"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/config"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/msgbroker"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/repository"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/service"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/util"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package http
 import (
 	"net/http"
 
-	"github.com/keerapon-som/no_noodle_workflow/core/api"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/api"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/pprof"

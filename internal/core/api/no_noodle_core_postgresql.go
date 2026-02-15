@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/keerapon-som/no_noodle_workflow/core/entitites"
-	"github.com/keerapon-som/no_noodle_workflow/core/repository"
-	"github.com/keerapon-som/no_noodle_workflow/core/util"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/entitites"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/repository"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/util"
 )
 
 type NoNoodleWorkflowCorePostgresql struct {

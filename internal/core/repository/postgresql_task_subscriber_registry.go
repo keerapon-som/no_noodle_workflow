@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/keerapon-som/no_noodle_workflow/core/entitites"
-	"github.com/keerapon-som/no_noodle_workflow/core/util"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/entitites"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/util"
 )
 
 func (r *PostgreSQLNoNoodleWorkflow) SaveSubscriber(sessionKey string, healthCheckURL string, task string, processID string, callbackURL string) error {

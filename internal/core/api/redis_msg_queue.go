@@ -7,7 +7,7 @@ import (
 
 	"time"
 
-	"github.com/keerapon-som/no_noodle_workflow/core/msgbroker"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/msgbroker"
 )
 
 // RedisMessageService now uses Redis lists as a simple message channal instead of pub/sub.

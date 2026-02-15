@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	"github.com/keerapon-som/no_noodle_workflow/core/entitites"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/entitites"
 )
 
 func (p *PostgreSQLNoNoodleWorkflow) InsertProcessConfig(tx *sql.Tx, config *entitites.ProcessConfig) error {

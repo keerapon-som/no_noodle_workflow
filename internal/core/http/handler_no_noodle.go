@@ -3,7 +3,7 @@ package http
 import (
 	"fmt"
 
-	"github.com/keerapon-som/no_noodle_workflow/core/entitites"
+	"github.com/keerapon-som/no_noodle_workflow/internal/core/entitites"
 
 	"github.com/gofiber/fiber/v2"
 )
