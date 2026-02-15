@@ -1,4 +1,4 @@
-package NoNoodleClient
+package client
 
 import (
 	"bytes"
