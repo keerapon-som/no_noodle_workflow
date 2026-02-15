@@ -1,8 +1,9 @@
 package http
 
 import (
+	"fmt"
 	"net/http"
-	"no-noodle-workflow-core/api"
+	"no-noodle-workflow-client/api"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
@@ -13,10 +14,10 @@ var (
 )
 
 type Handler struct {
-	noNoodleCore api.NoNoodleCoreInterface
+	noNoodleCore api.NoNoodleClientInterface
 }
 
-func NewHTTPRouter(noNoodleCore api.NoNoodleCoreInterface) *fiber.App {
+func NewHTTPRouter(noNoodleCore api.NoNoodleClientInterface) *fiber.App {
 	app := fiber.New(fiber.Config{
 		Immutable: true,
 	})
@@ -31,15 +32,22 @@ func NewHTTPRouter(noNoodleCore api.NoNoodleCoreInterface) *fiber.App {
 		})
 	})
 
-	h := &Handler{
-		noNoodleCore: noNoodleCore,
-	}
+	app.Post("/no_noodle_workflow_client/task0/subscribe", func(c *fiber.Ctx) error {
+		fmt.Println("Received subscribe request for task0")
+		return c.JSON(fiber.Map{
+			"status": "success",
+		})
+	})
 
-	app.Post("/complete_task", h.CompleteTask)
-	app.Post("/create_workflow", h.CreateWorkflow)
-	app.Post("/deploy_process_config", h.DeployProcessConfig)
-	app.Post("/failed_task", h.FailedTask)
-	app.Post("/subscribe", h.SubscribeTask)
+	// h := &Handler{
+	// 	noNoodleCore: noNoodleCore,
+	// }
+
+	// app.Post("/complete_task", h.CompleteTask)
+	// app.Post("/create_workflow", h.CreateWorkflow)
+	// app.Post("/deploy_process_config", h.DeployProcessConfig)
+	// app.Post("/failed_task", h.FailedTask)
+	// app.Post("/subscribe", h.SubscribeTask)
 
 	return app
 

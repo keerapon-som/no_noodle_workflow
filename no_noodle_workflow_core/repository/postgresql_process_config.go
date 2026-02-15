@@ -3,7 +3,7 @@ package repository
 import (
 	"database/sql"
 	"encoding/json"
-	"workflow_stage/entitites"
+	"no-noodle-workflow-core/entitites"
 )
 
 func (p *PostgreSQLNoNoodleWorkflow) InsertProcessConfig(tx *sql.Tx, config *entitites.ProcessConfig) error {

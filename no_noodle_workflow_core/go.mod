@@ -1,4 +1,4 @@
-module workflow_stage
+module no-noodle-workflow-core
 
 go 1.24.0
 

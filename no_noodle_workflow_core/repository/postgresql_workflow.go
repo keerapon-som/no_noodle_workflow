@@ -3,9 +3,9 @@ package repository
 import (
 	"database/sql"
 	"encoding/json"
+	"no-noodle-workflow-core/entitites"
+	"no-noodle-workflow-core/util"
 	"time"
-	"workflow_stage/entitites"
-	"workflow_stage/util"
 )
 
 // func (p *PostgreSQLNoNoodleWorkflow) GetTaskStatusFromWorkflowID(tx *sql.Tx, workflowID string) (map[string]entitites.TaskStatusData, error) {

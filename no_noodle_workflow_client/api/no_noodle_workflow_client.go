@@ -10,9 +10,8 @@ import (
 )
 
 type NoNoodleWorkflowClient struct {
-	hosturl             string
-	httpClient          *http.Client
-	redisMessageService *RedisMessageService
+	hosturl    string
+	httpClient *http.Client
 }
 
 type NoNoodleClientInterface interface {
@@ -20,13 +19,13 @@ type NoNoodleClientInterface interface {
 	CompleteTask(workflowID string, task string) error
 	CreateWorkflow(processID string) (string, error)
 	FailedTask(workflowID string, taskName string) error
+	SubscribeTask(processID string, taskName string, healthCheckURL string, callbackURL string, expiration int64) (string, error)
 }
 
-func NewNoNoodleWorkflowClient(hosturl string, httpClient *http.Client, redisMessageService *RedisMessageService) NoNoodleClientInterface {
+func NewNoNoodleWorkflowClient(hosturl string, httpClient *http.Client) NoNoodleClientInterface {
 	return &NoNoodleWorkflowClient{
-		hosturl:             hosturl,
-		httpClient:          httpClient,
-		redisMessageService: redisMessageService,
+		hosturl:    hosturl,
+		httpClient: httpClient,
 	}
 }
 
@@ -133,4 +132,58 @@ func (c *NoNoodleWorkflowClient) CreateWorkflow(processID string) (string, error
 func (c *NoNoodleWorkflowClient) FailedTask(workflowID string, taskName string) error {
 	// Implement the logic to mark a task as failed in the workflow using HTTP API or Redis message queue
 	return nil
+}
+
+func (c *NoNoodleWorkflowClient) SubscribeTask(processID string, taskName string, healthCheckURL string, callbackURL string, expiration int64) (string, error) {
+
+	type SubscribeRequest struct {
+		ProcessID      string `json:"process_id"`
+		TaskName       string `json:"task_name"`
+		HealthCheckURL string `json:"health_check_url"`
+		CallbackURL    string `json:"callback_url"`
+		Expiration     int64  `json:"expiration"`
+	}
+
+	payload := SubscribeRequest{
+		ProcessID:      processID,
+		TaskName:       taskName,
+		HealthCheckURL: healthCheckURL,
+		CallbackURL:    callbackURL,
+		Expiration:     expiration,
+	}
+
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+
+	req, err := http.NewRequest("POST", callbackURL, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to notify subscriber, status code: %d", resp.StatusCode)
+	}
+
+	type SubscribeResponse struct {
+		SessionKey string `json:"connection_key"`
+	}
+
+	var subscribeResp SubscribeResponse
+	err = json.NewDecoder(resp.Body).Decode(&subscribeResp)
+
+	if err != nil {
+		return "", err
+	}
+
+	return subscribeResp.SessionKey, nil
 }

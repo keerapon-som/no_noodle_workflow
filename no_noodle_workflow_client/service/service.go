@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"no-noodle-workflow-client/api"
+	"no-noodle-workflow-client/config"
 	"sync"
 
-	"no-noodle-workflow-core/api"
-	"no-noodle-workflow-core/config"
-	httpCatchup "no-noodle-workflow-core/http"
+	httpCatchup "no-noodle-workflow-client/http"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/sync/errgroup"
@@ -18,10 +18,10 @@ type Service struct {
 	fiberApp *fiber.App
 }
 
-func New(noNoodleCore api.NoNoodleCoreInterface) *Service {
+func New(noNoodleClient api.NoNoodleClientInterface) *Service {
 
 	return &Service{
-		fiberApp: httpCatchup.NewHTTPRouter(noNoodleCore),
+		fiberApp: httpCatchup.NewHTTPRouter(noNoodleClient),
 	}
 
 }

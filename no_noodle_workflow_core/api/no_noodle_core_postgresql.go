@@ -1,18 +1,23 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"workflow_stage/entitites"
-	"workflow_stage/repository"
-	"workflow_stage/util"
+	"net/http"
+	"no-noodle-workflow-core/entitites"
+	"no-noodle-workflow-core/repository"
+	"no-noodle-workflow-core/util"
+	"time"
 )
 
 type NoNoodleWorkflowCorePostgresql struct {
-	repo   *repository.PostgreSQLNoNoodleWorkflow
-	pubsub *RedisMessageService
+	httpClient             *http.Client
+	repo                   *repository.PostgreSQLNoNoodleWorkflow
+	pubsub                 *RedisMessageService
+	taskSubscriberRegistry *repository.RedisTaskSubscriberRegistry
 }
 
 const (
@@ -27,12 +32,16 @@ type NoNoodleCoreInterface interface {
 	CompleteTask(workflowID string, task string) error
 	CreateWorkflow(processID string) (string, error)
 	FailedTask(workflowID string, taskName string) error
+	SubscribeTask(processID string, taskName string, healthCheckURL string, callbackURL string, expiration int64) (string, error)
+	SubscriberHealthCheck(callbackURL string) error
 }
 
-func NewNoNoodleWorkflowCorePostgresql(repo *repository.PostgreSQLNoNoodleWorkflow, pubsub *RedisMessageService) NoNoodleCoreInterface {
+func NewNoNoodleWorkflowCorePostgresql(repo *repository.PostgreSQLNoNoodleWorkflow, pubsub *RedisMessageService, taskSubscriberRegistry *repository.RedisTaskSubscriberRegistry) NoNoodleCoreInterface {
 	return &NoNoodleWorkflowCorePostgresql{
-		repo:   repo,
-		pubsub: pubsub,
+		httpClient:             &http.Client{},
+		repo:                   repo,
+		pubsub:                 pubsub,
+		taskSubscriberRegistry: taskSubscriberRegistry,
 	}
 }
 
@@ -162,6 +171,11 @@ func (c *NoNoodleWorkflowCorePostgresql) CreateWorkflow(processID string) (strin
 			Status:     TASK_STATUS_IN_ACTIVE,
 			UpdateDate: util.GetCurrentTime(),
 		}
+
+		publishTaskToBrokerErr := c.publishTaskToBroker(tx, processID, workflowID, task)
+		if publishTaskToBrokerErr != nil {
+			return "", publishTaskToBrokerErr
+		}
 	}
 
 	publishedStage := make(map[string]bool)
@@ -220,4 +234,119 @@ func (c *NoNoodleWorkflowCorePostgresql) publishTaskToBroker(tx *sql.Tx, process
 	}
 
 	return c.pubsub.SendToMsgChannal(context.Background(), channal, jsonPayload)
+}
+
+func (c *NoNoodleWorkflowCorePostgresql) SubscriberHealthCheck(callbackURL string) error {
+
+	err := c.websocketHealthCheck(callbackURL)
+	if err != nil {
+		return fmt.Errorf("subscriber health check failed: %v", err)
+	}
+
+	return nil
+}
+
+func (c *NoNoodleWorkflowCorePostgresql) SubscribeTask(processID string, taskName string, healthCheckURL string, callbackURL string, expiration int64) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(expiration)*time.Second)
+
+	// Initial health check before registering subscriber
+	if err := c.websocketHealthCheck(healthCheckURL); err != nil {
+		cancel()
+		return "", fmt.Errorf("subscriber health check failed: %v", err)
+	}
+
+	sessionKey := generateSessionKey()
+	if sessionKey == "" {
+		cancel()
+		return "", fmt.Errorf("failed to generate session key")
+	}
+
+	channal := "no_noodle_workflow:" + processID + ":" + taskName
+
+	// Register subscriber before starting background goroutines
+	if err := c.taskSubscriberRegistry.AddSubscriber(sessionKey, channal, callbackURL, time.Duration(expiration)*time.Second); err != nil {
+		cancel()
+		return "", err
+	}
+
+	// Periodic health check, stops on context cancellation or failure
+	go func() {
+		healthCheckInterval := 10 * time.Second
+		ticker := time.NewTicker(healthCheckInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Printf("Stopping health checks for subscriber with session key %s: %v\n", sessionKey, ctx.Err())
+				return
+			case <-ticker.C:
+				go func() {
+					if err := c.websocketHealthCheck(healthCheckURL); err != nil {
+						fmt.Printf("Health check failed for subscriber with callback URL %s: %v\n", callbackURL, err)
+						if removeErr := c.taskSubscriberRegistry.RemoveSubscriber(sessionKey); removeErr != nil {
+							fmt.Printf("Failed to remove subscriber with session key %s: %v\n", sessionKey, removeErr)
+						}
+						cancel()
+						return
+					}
+				}()
+				go func() {
+					sessionKey, err := c.taskSubscriberRegistry.GetChannelInfoBySessionKey(sessionKey)
+					if err != nil {
+						fmt.Printf("Notfound channelInfo for session key %s: %v\n", sessionKey, "Do Eject Subscriber")
+						cancel()
+						return
+					}
+				}()
+			}
+		}
+	}()
+
+	// Start consuming messages; this will stop when ctx is cancelled
+	go c.pubsub.SubscribeChannal(ctx, callbackURL, channal, c.websocketNotify)
+
+	return sessionKey, nil
+}
+
+func (c *NoNoodleWorkflowCorePostgresql) websocketNotify(callbackURL string, payload []byte) error {
+
+	req, err := http.NewRequest("POST", callbackURL, bytes.NewBuffer(payload))
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to notify subscriber, status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func (c *NoNoodleWorkflowCorePostgresql) websocketHealthCheck(callbackURL string) error {
+
+	req, err := http.NewRequest("GET", callbackURL, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("subscriber health check failed, status code: %d", resp.StatusCode)
+	}
+
+	return nil
 }

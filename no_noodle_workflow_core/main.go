@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"workflow_stage/api"
-	"workflow_stage/config"
-	"workflow_stage/msgbroker"
-	"workflow_stage/repository"
-	"workflow_stage/service"
-	"workflow_stage/util"
+	"no-noodle-workflow-core/api"
+	"no-noodle-workflow-core/config"
+	"no-noodle-workflow-core/msgbroker"
+	"no-noodle-workflow-core/repository"
+	"no-noodle-workflow-core/service"
+	"no-noodle-workflow-core/util"
+	"time"
 )
 
 func main() {
@@ -39,7 +40,17 @@ func main() {
 	defer redisBroker.Close()
 
 	msgService := api.NewRedisMessageService(redisBroker)
-	noNoodleCoreService := api.NewNoNoodleWorkflowCorePostgresql(repo, msgService)
+
+	taskSubscriberRegistry, err := repository.NewRedisTaskSubscriberRegistry(
+		config.RedisMessageBrokerConfig.Addr,
+		config.RedisMessageBrokerConfig.Password,
+		config.RedisMessageBrokerConfig.DB,
+		30*time.Minute, // default expiration for subscribers
+	)
+	if err != nil {
+		panic(err)
+	}
+	noNoodleCoreService := api.NewNoNoodleWorkflowCorePostgresql(repo, msgService, taskSubscriberRegistry)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -50,7 +61,7 @@ func main() {
 		panic(err)
 	}
 
-	// // Start subscriber first (in a goroutine so main can continue)
+	// Start subscriber first (in a goroutine so main can continue)
 	// go msgService.SubscribeChannal(ctx, "no_noodle_workflow:process1:task0")
 
 	// time.Sleep(500 * time.Millisecond) // small delay to ensure subscription

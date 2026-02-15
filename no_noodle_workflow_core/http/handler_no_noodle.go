@@ -1,7 +1,7 @@
 package http
 
 import (
-	"workflow_stage/entitites"
+	"no-noodle-workflow-core/entitites"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -115,5 +115,51 @@ func (h *Handler) FailedTask(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"status": "success",
 		"data":   "Task marked as failed successfully",
+	})
+}
+
+func (h *Handler) SubscribeTask(c *fiber.Ctx) error {
+
+	type SubscribeRequest struct {
+		ProcessID      string `json:"process_id"`
+		TaskName       string `json:"task_name"`
+		HealthCheckURL string `json:"health_check_url"`
+		CallbackURL    string `json:"callback_url"`
+		Expiration     int64  `json:"expiration"`
+	}
+
+	var req SubscribeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  "error",
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+	}
+
+	if req.Expiration <= 0 {
+		req.Expiration = 600 // Default expiration time in seconds
+	}
+
+	err := h.noNoodleCore.SubscriberHealthCheck(req.HealthCheckURL)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  "error",
+			"error":   "Subscriber health check failed",
+			"details": err.Error(),
+		})
+	}
+
+	sessionKey, err := h.noNoodleCore.SubscribeTask(req.ProcessID, req.TaskName, req.HealthCheckURL, req.CallbackURL, req.Expiration)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"error":   "Failed to subscribe to task",
+			"details": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"connection_key": sessionKey,
 	})
 }

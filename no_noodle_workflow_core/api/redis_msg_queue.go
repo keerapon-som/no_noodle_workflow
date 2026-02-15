@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"workflow_stage/msgbroker"
+	"no-noodle-workflow-core/msgbroker"
 )
 
 // RedisMessageService now uses Redis lists as a simple message channal instead of pub/sub.
@@ -29,13 +29,14 @@ func (ps *RedisMessageService) SendToMsgChannal(ctx context.Context, channal str
 
 // SubscribeChannal continuously dequeues messages from the topic channal and processes them.
 // This blocks until the context is cancelled or an unrecoverable error occurs.
-func (ps *RedisMessageService) SubscribeChannal(ctx context.Context, channal string) {
+func (ps *RedisMessageService) SubscribeChannal(ctx context.Context, callbackURL string, channal string, handler func(callbackURL string, payload []byte) error) {
 
 	fmt.Println("Consuming messages from channal:", channal)
 
 	for {
 		// Exit if context is cancelled
 		if ctx.Err() != nil {
+			fmt.Println("Context cancelled, stopping subscription to channal:", channal, "error:", ctx.Err())
 			return
 		}
 
@@ -43,6 +44,7 @@ func (ps *RedisMessageService) SubscribeChannal(ctx context.Context, channal str
 		if err != nil {
 			// If the context was cancelled, just exit
 			if ctx.Err() != nil {
+				fmt.Println("Context cancelled, stopping subscription to channal:", channal, "error:", ctx.Err())
 				return
 			}
 			log.Println("error dequeuing from Redis channal:", err)
@@ -55,5 +57,10 @@ func (ps *RedisMessageService) SubscribeChannal(ctx context.Context, channal str
 
 		log.Printf("Channal %s queued message: %s", channal, string(payload))
 		// Handle the message payload here
+
+		err = handler(callbackURL, payload)
+		if err != nil {
+			log.Println("error handling message from channal:", err)
+		}
 	}
 }
