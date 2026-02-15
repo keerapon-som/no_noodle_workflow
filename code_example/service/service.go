@@ -5,11 +5,10 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/keerapon-som/no_noodle_workflow/packages/api"
-
 	"sync"
 
 	httpCatchup "github.com/keerapon-som/no_noodle_workflow/http"
+	"github.com/keerapon-som/no_noodle_workflow/packages/nonoodleclient"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/sync/errgroup"
@@ -17,10 +16,10 @@ import (
 
 type Service struct {
 	fiberApp       *fiber.App
-	noNoodleClient api.NoNoodleClientInterface
+	noNoodleClient nonoodleclient.NoNoodleClientInterface
 }
 
-func New(noNoodleClient api.NoNoodleClientInterface) *Service {
+func New(noNoodleClient nonoodleclient.NoNoodleClientInterface) *Service {
 
 	return &Service{
 		fiberApp:       httpCatchup.NewHTTPRouter(noNoodleClient),

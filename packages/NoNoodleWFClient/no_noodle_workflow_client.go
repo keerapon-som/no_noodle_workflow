@@ -1,4 +1,4 @@
-package api
+package NoNoodleClient
 
 import (
 	"bytes"
@@ -8,11 +8,10 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/keerapon-som/no_noodle_workflow/packages/entitites"
 )
 
 type ProcessRegistry struct {
-	listTaskRegistry map[string]func(jobRegistry entitites.Job) error
+	listTaskRegistry map[string]func(jobRegistry Job) error
 }
 
 type NoNoodleWorkflowClient struct {
@@ -30,12 +29,12 @@ type NoodleJobClient struct {
 }
 
 type NoNoodleClientInterface interface {
-	DeployProcessConfig(processConfig *entitites.ProcessConfig) error
+	DeployProcessConfig(processConfig *ProcessConfig) error
 	CompleteTask(workflowID string, task string) error
 	CreateWorkflow(processID string) (string, error)
 	FailedTask(workflowID string, task string) error
 	AddNoNoodleWorkflowHandler(fiberApp *fiber.App)
-	RegisterTask(processID string, task string, handler func(noodleJobClient NoodleJobClient, job entitites.Job) error)
+	RegisterTask(processID string, task string, handler func(noodleJobClient NoodleJobClient, job Job) error)
 	Run() error
 }
 
@@ -45,16 +44,16 @@ func NewNoNoodleWorkflowClient(hosturl string, httpClient *http.Client, clientHe
 		hosturl:    hosturl,
 		httpClient: httpClient,
 		ProcessRegistry: &ProcessRegistry{
-			listTaskRegistry: make(map[string]func(job entitites.Job) error),
+			listTaskRegistry: make(map[string]func(job Job) error),
 		},
 		clientHealthCheckUrl: clientHealthCheckUrl,
 		clientBaseUrl:        clientBaseUrl,
 	}
 }
 
-func (nn *NoNoodleWorkflowClient) RegisterTask(processID string, task string, handler func(noodleJobClient NoodleJobClient, job entitites.Job) error) {
+func (nn *NoNoodleWorkflowClient) RegisterTask(processID string, task string, handler func(noodleJobClient NoodleJobClient, job Job) error) {
 
-	nn.ProcessRegistry.listTaskRegistry[processID+"_"+task] = func(job entitites.Job) error {
+	nn.ProcessRegistry.listTaskRegistry[processID+"_"+task] = func(job Job) error {
 		return handler(NoodleJobClient{
 			CompleteTask: nn.CompleteTask,
 			FailedTask:   nn.FailedTask,
@@ -80,7 +79,7 @@ func (nn *NoNoodleWorkflowClient) healthCheck() error {
 	return nil
 }
 
-func (pr *ProcessRegistry) getTaskHandler(processID string, task string) (func(job entitites.Job) error, bool) {
+func (pr *ProcessRegistry) getTaskHandler(processID string, task string) (func(job Job) error, bool) {
 	handler, exists := pr.listTaskRegistry[processID+"_"+task]
 	return handler, exists
 }
@@ -114,7 +113,7 @@ func (nn *NoNoodleWorkflowClient) Run() error {
 
 	nn.fiberApp.Post("/no_noodle_workflow_client/subscribe", func(c *fiber.Ctx) error {
 
-		var jsonPayloads entitites.Job
+		var jsonPayloads Job
 		if err := c.BodyParser(&jsonPayloads); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"status":  "error",
@@ -147,7 +146,7 @@ func (nn *NoNoodleWorkflowClient) Run() error {
 	// Implement the logic to run the client, such as starting an HTTP server to listen for incoming task requests or connecting to a message queue
 	return nil
 }
-func (nn *NoNoodleWorkflowClient) taskHandler(job entitites.Job) {
+func (nn *NoNoodleWorkflowClient) taskHandler(job Job) {
 	handler, exists := nn.ProcessRegistry.getTaskHandler(job.ProcessID, job.TaskID)
 	if exists {
 		handler(job)
@@ -160,7 +159,7 @@ func (nn *NoNoodleWorkflowClient) AddNoNoodleWorkflowHandler(fiberApp *fiber.App
 	nn.fiberApp = fiberApp
 }
 
-func (nn *NoNoodleWorkflowClient) DeployProcessConfig(processConfig *entitites.ProcessConfig) error {
+func (nn *NoNoodleWorkflowClient) DeployProcessConfig(processConfig *ProcessConfig) error {
 	// Implement the logic to deploy a process configuration using HTTP API or Redis message queue
 	return nil
 }

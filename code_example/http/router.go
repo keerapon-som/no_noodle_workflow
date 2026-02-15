@@ -3,10 +3,9 @@ package http
 import (
 	"net/http"
 
-	"github.com/keerapon-som/no_noodle_workflow/packages/api"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
+	"github.com/keerapon-som/no_noodle_workflow/packages/nonoodleclient"
 )
 
 var (
@@ -14,10 +13,10 @@ var (
 )
 
 type Handler struct {
-	noNoodleCore api.NoNoodleClientInterface
+	noNoodleCore nonoodleclient.NoNoodleClientInterface
 }
 
-func NewHTTPRouter(noNoodleCore api.NoNoodleClientInterface) *fiber.App {
+func NewHTTPRouter(noNoodleCore nonoodleclient.NoNoodleClientInterface) *fiber.App {
 	app := fiber.New(fiber.Config{
 		Immutable: true,
 	})

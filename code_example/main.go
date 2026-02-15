@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/keerapon-som/no_noodle_workflow/packages/api"
-	"github.com/keerapon-som/no_noodle_workflow/packages/entitites"
+	"github.com/keerapon-som/no_noodle_workflow/packages/nonoodleclient"
 	"github.com/keerapon-som/no_noodle_workflow/service"
 )
 
-func handler(noodleJobClient api.NoodleJobClient, job entitites.Job) error {
+func handler(noodleJobClient nonoodleclient.NoodleJobClient, job nonoodleclient.Job) error {
 
 	fmt.Println("Hello from task handler, job details:", job)
 
@@ -26,7 +25,7 @@ func main() {
 
 	// config := config.GetConfig()
 
-	noNoodleClient := api.NewNoNoodleWorkflowClient("http://localhost:8888", &http.Client{}, "http://localhost:1234/health", "http://localhost:1234")
+	noNoodleClient := nonoodleclient.NewNoNoodleWorkflowClient("http://localhost:8888", &http.Client{}, "http://localhost:1234/health", "http://localhost:1234")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

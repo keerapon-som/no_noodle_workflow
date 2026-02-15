@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.11
+	github.com/keerapon-som/no_noodle_workflow/packages/nonoodleclient v0.0.0-20260215132516-6bbe495c1620
 	golang.org/x/sync v0.19.0
 )
 

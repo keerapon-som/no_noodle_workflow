@@ -1,4 +1,4 @@
-package nonoodleclient
+package NoNoodleClient
 
 import "time"
 

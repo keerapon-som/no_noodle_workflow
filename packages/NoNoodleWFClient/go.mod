@@ -1,4 +1,4 @@
-module github.com/keerapon-som/no_noodle_workflow/packages/nonoodleclient
+module github.com/keerapon-som/no_noodle_workflow/packages/NoNoodleWFClient
 
 go 1.21.3
 
