@@ -8,7 +8,7 @@ import (
 )
 
 func (p *PostgreSQLNoNoodleWorkflow) InsertProcessConfig(tx *sql.Tx, config *entitites.ProcessConfig) error {
-	gg.LogInfo("Inserting process config for processID: %s", config.ProcessID)
+
 	// Marshal maps to JSON
 	mapStageTaskJSON, err := json.Marshal(config.MapStageTask)
 	if err != nil {
