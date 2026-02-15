@@ -32,15 +32,17 @@ func NewHTTPRouter(noNoodleCore api.NoNoodleClientInterface) *fiber.App {
 		})
 	})
 
-	app.Delete("/no_noodle_workflow_client/subscribe/:session", func(c *fiber.Ctx) error { // Notify to client that session was deleted --> need to need to do reconnect
-		fmt.Println("Received complete request for task0")
-		return c.JSON(fiber.Map{
-			"status": "success",
-		})
-	})
+	// app.Delete("/no_noodle_workflow_client/subscribe/:session", func(c *fiber.Ctx) error { // Notify to client that session was deleted --> need to need to do reconnect
+	// 	session := c.Params("session")
+	// 	fmt.Printf("Session %s was deleted, client should reconnect\n", session)
+	// 	return c.JSON(fiber.Map{
+	// 		"status": "success",
+	// 	})
+	// })
 
-	app.Post("/no_noodle_workflow_client/task0/subscribe", func(c *fiber.Ctx) error {
-		fmt.Println("Received subscribe request for task0")
+	app.Post("/no_noodle_workflow_client/:task/subscribe", func(c *fiber.Ctx) error {
+		task := c.Params("task")
+		fmt.Println("Received subscribe request for task:", task)
 		return c.JSON(fiber.Map{
 			"status": "success",
 		})

@@ -116,7 +116,7 @@ package http
 
 // 	type SubscribeRequest struct {
 // 		ProcessID      string `json:"process_id"`
-// 		TaskName       string `json:"task_name"`
+// 		Task       string `json:"task"`
 // 		HealthCheckURL string `json:"health_check_url"`
 // 		CallbackURL    string `json:"callback_url"`
 // 		Expiration     int64  `json:"expiration"`
@@ -140,7 +140,7 @@ package http
 // 		})
 // 	}
 
-// 	sessionKey, err := h.noNoodleCore.SubscribeTask(req.ProcessID, req.TaskName, req.HealthCheckURL, req.CallbackURL, req.Expiration)
+// 	sessionKey, err := h.noNoodleCore.SubscribeTask(req.ProcessID, req.Task, req.HealthCheckURL, req.CallbackURL, req.Expiration)
 // 	if err != nil {
 // 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 // 			"status":  "error",

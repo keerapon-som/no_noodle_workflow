@@ -15,5 +15,15 @@ CREATE TABLE workflow (
     task_status JSONB NOT NULL,
     published_stage JSONB NOT NULL,
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (process_id) REFERENCES process_config(process_id)
+    FOREIGN KEY (process_id) REFERENCES process_config (process_id)
+);
+
+CREATE TABLE subscription (
+    session_key VARCHAR(255) PRIMARY KEY,
+    process_id VARCHAR(255) NOT NULL,
+    task VARCHAR(255) NOT NULL,
+    health_check_url TEXT NOT NULL,
+    callback_url TEXT NOT NULL,
+    create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (process_id) REFERENCES process_config (process_id)
 );

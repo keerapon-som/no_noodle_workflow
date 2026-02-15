@@ -122,10 +122,9 @@ func (h *Handler) SubscribeTask(c *fiber.Ctx) error {
 
 	type SubscribeRequest struct {
 		ProcessID      string `json:"process_id"`
-		TaskName       string `json:"task_name"`
+		Task           string `json:"task"`
 		HealthCheckURL string `json:"health_check_url"`
 		CallbackURL    string `json:"callback_url"`
-		Expiration     int64  `json:"expiration"`
 	}
 
 	var req SubscribeRequest
@@ -137,8 +136,17 @@ func (h *Handler) SubscribeTask(c *fiber.Ctx) error {
 		})
 	}
 
-	if req.Expiration <= 0 {
-		req.Expiration = 600 // Default expiration time in seconds
+	if req.ProcessID == "" || req.Task == "" || req.HealthCheckURL == "" || req.CallbackURL == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status": "error",
+			"error":  "Missing required fields: process_id, task, health_check_url, callback_url",
+			"requestData": fiber.Map{
+				"process_id":       req.ProcessID,
+				"task":             req.Task,
+				"health_check_url": req.HealthCheckURL,
+				"callback_url":     req.CallbackURL,
+			},
+		})
 	}
 
 	err := h.noNoodleCore.SubscriberHealthCheck(req.HealthCheckURL)
@@ -150,7 +158,7 @@ func (h *Handler) SubscribeTask(c *fiber.Ctx) error {
 		})
 	}
 
-	sessionKey, err := h.noNoodleCore.SubscribeTask(req.ProcessID, req.TaskName, req.HealthCheckURL, req.CallbackURL, req.Expiration)
+	sessionKey, err := h.noNoodleCore.SubscribeTask(req.ProcessID, req.Task, req.HealthCheckURL, req.CallbackURL)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status":  "error",

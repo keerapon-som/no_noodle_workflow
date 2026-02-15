@@ -9,7 +9,6 @@ import (
 	"no-noodle-workflow-core/repository"
 	"no-noodle-workflow-core/service"
 	"no-noodle-workflow-core/util"
-	"time"
 )
 
 func main() {
@@ -41,16 +40,7 @@ func main() {
 
 	msgService := api.NewRedisMessageService(redisBroker)
 
-	taskSubscriberRegistry, err := repository.NewRedisTaskSubscriberRegistry(
-		config.RedisMessageBrokerConfig.Addr,
-		config.RedisMessageBrokerConfig.Password,
-		config.RedisMessageBrokerConfig.DB,
-		30*time.Minute, // default expiration for subscribers
-	)
-	if err != nil {
-		panic(err)
-	}
-	noNoodleCoreService := api.NewNoNoodleWorkflowCorePostgresql(repo, msgService, taskSubscriberRegistry)
+	noNoodleCoreService := api.NewNoNoodleWorkflowCorePostgresql(repo, msgService)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

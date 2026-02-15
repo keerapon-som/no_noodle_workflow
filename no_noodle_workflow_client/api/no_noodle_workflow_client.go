@@ -18,8 +18,8 @@ type NoNoodleClientInterface interface {
 	DeployProcessConfig(processConfig *entitites.ProcessConfig) error
 	CompleteTask(workflowID string, task string) error
 	CreateWorkflow(processID string) (string, error)
-	FailedTask(workflowID string, taskName string) error
-	SubscribeTask(processID string, taskName string, healthCheckURL string, callbackURL string, expiration int64) (string, error)
+	FailedTask(workflowID string, task string) error
+	SubscribeTask(processID string, task string, healthCheckURL string, callbackURL string, expiration int64) (string, error)
 }
 
 func NewNoNoodleWorkflowClient(hosturl string, httpClient *http.Client) NoNoodleClientInterface {
@@ -129,16 +129,16 @@ func (c *NoNoodleWorkflowClient) CreateWorkflow(processID string) (string, error
 	return createWorkflowResp.WorkflowID, nil
 }
 
-func (c *NoNoodleWorkflowClient) FailedTask(workflowID string, taskName string) error {
+func (c *NoNoodleWorkflowClient) FailedTask(workflowID string, task string) error {
 	// Implement the logic to mark a task as failed in the workflow using HTTP API or Redis message queue
 	return nil
 }
 
-func (c *NoNoodleWorkflowClient) SubscribeTask(processID string, taskName string, healthCheckURL string, callbackURL string, expiration int64) (string, error) {
+func (c *NoNoodleWorkflowClient) SubscribeTask(processID string, task string, healthCheckURL string, callbackURL string, expiration int64) (string, error) {
 
 	type SubscribeRequest struct {
 		ProcessID      string `json:"process_id"`
-		TaskName       string `json:"task_name"`
+		Task           string `json:"task"`
 		HealthCheckURL string `json:"health_check_url"`
 		CallbackURL    string `json:"callback_url"`
 		Expiration     int64  `json:"expiration"`
@@ -146,7 +146,7 @@ func (c *NoNoodleWorkflowClient) SubscribeTask(processID string, taskName string
 
 	payload := SubscribeRequest{
 		ProcessID:      processID,
-		TaskName:       taskName,
+		Task:           task,
 		HealthCheckURL: healthCheckURL,
 		CallbackURL:    callbackURL,
 		Expiration:     expiration,
