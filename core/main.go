@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"no-noodle-workflow-core/api"
-	"no-noodle-workflow-core/config"
-	"no-noodle-workflow-core/msgbroker"
-	"no-noodle-workflow-core/repository"
-	"no-noodle-workflow-core/service"
-	"no-noodle-workflow-core/util"
+
+	"github.com/keerapon-som/no_noodle_workflow/core/api"
+	"github.com/keerapon-som/no_noodle_workflow/core/config"
+	"github.com/keerapon-som/no_noodle_workflow/core/msgbroker"
+	"github.com/keerapon-som/no_noodle_workflow/core/repository"
+	"github.com/keerapon-som/no_noodle_workflow/core/service"
+	"github.com/keerapon-som/no_noodle_workflow/core/util"
 )
 
 func main() {

@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"sync"
 
-	"no-noodle-workflow-core/api"
-	"no-noodle-workflow-core/config"
-	httpCatchup "no-noodle-workflow-core/http"
+	httpCatchup "github.com/keerapon-som/no_noodle_workflow/core/http"
+
+	"github.com/keerapon-som/no_noodle_workflow/core/api"
+	"github.com/keerapon-som/no_noodle_workflow/core/config"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/sync/errgroup"

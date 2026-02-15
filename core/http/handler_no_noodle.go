@@ -2,7 +2,8 @@ package http
 
 import (
 	"fmt"
-	"no-noodle-workflow-core/entitites"
+
+	"github.com/keerapon-som/no_noodle_workflow/core/entitites"
 
 	"github.com/gofiber/fiber/v2"
 )

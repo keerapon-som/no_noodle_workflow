@@ -3,8 +3,9 @@ package repository
 import (
 	"database/sql"
 	"fmt"
-	"no-noodle-workflow-core/entitites"
-	"no-noodle-workflow-core/util"
+
+	"github.com/keerapon-som/no_noodle_workflow/core/entitites"
+	"github.com/keerapon-som/no_noodle_workflow/core/util"
 )
 
 func (r *PostgreSQLNoNoodleWorkflow) SaveSubscriber(sessionKey string, healthCheckURL string, task string, processID string, callbackURL string) error {

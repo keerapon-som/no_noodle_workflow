@@ -1,12 +1,20 @@
-module github.com/keerapon-som/no_noodle_workflow/packages/NoNoodleWFClient
+module github.com/keerapon-som/no_noodle_workflow
 
-go 1.21.3
+go 1.24.0
 
-require github.com/gofiber/fiber/v2 v2.52.11
+require (
+	github.com/gofiber/fiber/v2 v2.52.11
+	github.com/google/uuid v1.6.0
+	github.com/joho/godotenv v1.5.1
+	github.com/lib/pq v1.11.2
+	github.com/redis/go-redis/v9 v9.17.3
+	golang.org/x/sync v0.19.0
+)
 
 require (
 	github.com/andybalholm/brotli v1.1.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
