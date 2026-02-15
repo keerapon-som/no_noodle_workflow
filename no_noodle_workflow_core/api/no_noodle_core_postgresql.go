@@ -222,8 +222,16 @@ func (c *NoNoodleWorkflowCorePostgresql) FailedTask(workflowID string, task stri
 
 func (c *NoNoodleWorkflowCorePostgresql) publishTaskToBroker(tx *sql.Tx, processID string, workflowID string, stageTask string) error {
 
-	payload := map[string]string{
-		"workflow_id": workflowID,
+	type PublishedPayload struct {
+		ProcessID  string `json:"process_id"`
+		TaskID     string `json:"task_id"`
+		WorkflowID string `json:"workflow_id"`
+	}
+
+	payload := PublishedPayload{
+		ProcessID:  processID,
+		TaskID:     stageTask,
+		WorkflowID: workflowID,
 	}
 
 	jsonPayload, err := json.Marshal(payload)
@@ -334,6 +342,8 @@ func (c *NoNoodleWorkflowCorePostgresql) websocketNotify(callbackURL string, pay
 	if err != nil {
 		return err
 	}
+
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

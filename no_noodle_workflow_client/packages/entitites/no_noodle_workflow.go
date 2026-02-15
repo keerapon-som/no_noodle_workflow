@@ -20,3 +20,14 @@ type Workflow struct {
 	PublishedStage map[string]bool           `json:"published_stage"`
 	CreateDate     time.Time                 `json:"create_date"`
 }
+
+type Job struct {
+	ProcessID  string `json:"process_id"`
+	TaskID     string `json:"task_id"`
+	WorkflowID string `json:"workflow_id"`
+}
+
+type JobRegistry struct {
+	ProcessID string `json:"process_id"`
+	TaskID    string `json:"task_id"`
+}

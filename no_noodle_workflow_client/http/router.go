@@ -1,9 +1,8 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
-	"no-noodle-workflow-client/api"
+	"no-noodle-workflow-client/packages/api"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/pprof"
@@ -32,21 +31,7 @@ func NewHTTPRouter(noNoodleCore api.NoNoodleClientInterface) *fiber.App {
 		})
 	})
 
-	// app.Delete("/no_noodle_workflow_client/subscribe/:session", func(c *fiber.Ctx) error { // Notify to client that session was deleted --> need to need to do reconnect
-	// 	session := c.Params("session")
-	// 	fmt.Printf("Session %s was deleted, client should reconnect\n", session)
-	// 	return c.JSON(fiber.Map{
-	// 		"status": "success",
-	// 	})
-	// })
-
-	app.Post("/no_noodle_workflow_client/:task/subscribe", func(c *fiber.Ctx) error {
-		task := c.Params("task")
-		fmt.Println("Received subscribe request for task:", task)
-		return c.JSON(fiber.Map{
-			"status": "success",
-		})
-	})
+	noNoodleCore.AddNoNoodleWorkflowHandler(app)
 
 	// h := &Handler{
 	// 	noNoodleCore: noNoodleCore,

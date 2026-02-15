@@ -39,18 +39,74 @@ func (rb *RedisMessageBroker) Enqueue(ctx context.Context, queue string, message
 	return rb.client.RPush(ctx, queue, message).Err()
 }
 
-// Dequeue blocks until a message is available on the queue or context is cancelled
-func (rb *RedisMessageBroker) Dequeue(ctx context.Context, queue string) ([]byte, error) {
+// Dequeue reserves a message with a visibility timeout.
+//
+// It moves a message from the main queue to a processing queue and records a
+// deadline in a sorted set. Until the message is Ack'ed or the deadline
+// passes and it is re-queued, no other consumer will see it.
+func (rb *RedisMessageBroker) Dequeue(ctx context.Context, queue string, visibilityTimeout time.Duration) ([]byte, error) {
+	processingQueue := queue + ":processing"
+	reservedSet := queue + ":reserved"
+
 	// 0 timeout means block indefinitely until a message arrives or ctx is cancelled
-	res, err := rb.client.BLPop(ctx, 0, queue).Result()
+	msg, err := rb.client.BRPopLPush(ctx, queue, processingQueue, 0).Result()
 	if err != nil {
 		return nil, err
 	}
-	if len(res) < 2 {
-		return nil, fmt.Errorf("unexpected BLPop response length: %d", len(res))
+
+	// Record visibility timeout deadline
+	deadline := time.Now().Add(visibilityTimeout).Unix()
+	err = rb.client.ZAdd(ctx, reservedSet, redis.Z{
+		Score:  float64(deadline),
+		Member: msg,
+	}).Err()
+	if err != nil {
+		return nil, err
 	}
-	// res[0] is the queue name, res[1] is the payload
-	return []byte(res[1]), nil
+
+	return []byte(msg), nil
+}
+
+// Ack confirms successful processing of a message, removing it from the
+// processing queue and the reserved set so it will not be re-delivered.
+func (rb *RedisMessageBroker) Ack(ctx context.Context, queue string, message []byte) error {
+	processingQueue := queue + ":processing"
+	reservedSet := queue + ":reserved"
+	msg := string(message)
+
+	pipe := rb.client.TxPipeline()
+	pipe.LRem(ctx, processingQueue, 1, msg)
+	pipe.ZRem(ctx, reservedSet, msg)
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// RequeueExpired scans for messages whose visibility timeout has expired and
+// moves them back to the main queue so they can be processed again.
+func (rb *RedisMessageBroker) RequeueExpired(ctx context.Context, queue string) error {
+	processingQueue := queue + ":processing"
+	reservedSet := queue + ":reserved"
+	now := time.Now().Unix()
+
+	expired, err := rb.client.ZRangeByScore(ctx, reservedSet, &redis.ZRangeBy{
+		Min: "-inf",
+		Max: fmt.Sprint(now),
+	}).Result()
+	if err != nil {
+		return err
+	}
+	if len(expired) == 0 {
+		return nil
+	}
+
+	pipe := rb.client.TxPipeline()
+	for _, msg := range expired {
+		pipe.LRem(ctx, processingQueue, 1, msg)
+		pipe.RPush(ctx, queue, msg)
+		pipe.ZRem(ctx, reservedSet, msg)
+	}
+	_, err = pipe.Exec(ctx)
+	return err
 }
 
 // Close closes the Redis connection

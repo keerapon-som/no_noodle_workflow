@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"no-noodle-workflow-client/api"
-	"no-noodle-workflow-client/config"
+	"no-noodle-workflow-client/packages/api"
+
 	"sync"
 
 	httpCatchup "no-noodle-workflow-client/http"
@@ -15,13 +15,15 @@ import (
 )
 
 type Service struct {
-	fiberApp *fiber.App
+	fiberApp       *fiber.App
+	noNoodleClient api.NoNoodleClientInterface
 }
 
 func New(noNoodleClient api.NoNoodleClientInterface) *Service {
 
 	return &Service{
-		fiberApp: httpCatchup.NewHTTPRouter(noNoodleClient),
+		fiberApp:       httpCatchup.NewHTTPRouter(noNoodleClient),
+		noNoodleClient: noNoodleClient,
 	}
 
 }
@@ -36,7 +38,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 	errgroup.Go(func() error {
 
-		err := s.fiberApp.Listen(":" + config.GetConfig().ServerConfig.HTTP.Port)
+		err := s.fiberApp.Listen(":" + "1234")
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 
 			return err
@@ -50,6 +52,11 @@ func (s *Service) Run(ctx context.Context) error {
 
 		return s.fiberApp.Shutdown()
 	})
+
+	err := s.noNoodleClient.Run()
+	if err != nil {
+		return err
+	}
 
 	return errgroup.Wait()
 }

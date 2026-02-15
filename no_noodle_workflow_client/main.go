@@ -2,19 +2,41 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"no-noodle-workflow-client/api"
+	"no-noodle-workflow-client/packages/api"
+	"no-noodle-workflow-client/packages/entitites"
 	"no-noodle-workflow-client/service"
 )
+
+func handler(noodleJobClient api.NoodleJobClient, job entitites.Job) error {
+
+	fmt.Println("Hello from task handler, job details:", job)
+
+	err := noodleJobClient.CompleteTask(job.WorkflowID, job.TaskID)
+	if err != nil {
+		fmt.Println("Error completing task:", err)
+	}
+
+	return nil
+}
 
 func main() {
 
 	// config := config.GetConfig()
 
-	noNoodleClient := api.NewNoNoodleWorkflowClient("http://localhost:8888", &http.Client{})
+	noNoodleClient := api.NewNoNoodleWorkflowClient("http://localhost:8888", &http.Client{}, "http://localhost:1234/health", "http://localhost:1234")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	noNoodleClient.RegisterTask("process1", "task0", handler)
+	noNoodleClient.RegisterTask("process1", "task1", handler)
+	noNoodleClient.RegisterTask("process1", "task2", handler)
+	noNoodleClient.RegisterTask("process1", "task3", handler)
+	noNoodleClient.RegisterTask("process1", "task4", handler)
+	noNoodleClient.RegisterTask("process1", "task5", handler)
+	noNoodleClient.RegisterTask("process1", "task6", handler)
 
 	err := service.New(noNoodleClient).Run(ctx)
 

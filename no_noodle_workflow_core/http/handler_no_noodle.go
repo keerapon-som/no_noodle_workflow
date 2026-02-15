@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"no-noodle-workflow-core/entitites"
 
 	"github.com/gofiber/fiber/v2"
@@ -149,8 +150,11 @@ func (h *Handler) SubscribeTask(c *fiber.Ctx) error {
 		})
 	}
 
+	fmt.Println("get Req ", req)
+
 	err := h.noNoodleCore.SubscriberHealthCheck(req.HealthCheckURL)
 	if err != nil {
+		fmt.Println("GET SUBSCRIBE ERROR ", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status":  "error",
 			"error":   "Subscriber health check failed",

@@ -21,13 +21,13 @@ func (r *PostgreSQLNoNoodleWorkflow) SaveSubscriber(sessionKey string, healthChe
 		}
 	}()
 
-	sessionKeys, err := r.getSessionIdFromCallbackURL(tx, callbackURL)
+	exists, err := r.CheckIsProcessTaskCallBackExist(tx, processID, task, callbackURL)
 	if err != nil {
 		return err
 	}
 
-	if len(sessionKeys) > 0 {
-		return fmt.Errorf("subscriber already exists for callback URL: %s", callbackURL)
+	if exists {
+		return fmt.Errorf("subscriber already exists for processID: %s, task: %s, callbackURL: %s", processID, task, callbackURL)
 	}
 
 	err = r.addSubscriber(tx, sessionKey, healthCheckURL, task, processID, callbackURL)
@@ -38,24 +38,14 @@ func (r *PostgreSQLNoNoodleWorkflow) SaveSubscriber(sessionKey string, healthChe
 	return nil
 }
 
-func (r *PostgreSQLNoNoodleWorkflow) getSessionIdFromCallbackURL(tx *sql.Tx, callbackURL string) ([]string, error) {
-	query := "SELECT session_key FROM subscription WHERE callback_url = $1"
-	rows, err := tx.Query(query, callbackURL)
+func (r *PostgreSQLNoNoodleWorkflow) CheckIsProcessTaskCallBackExist(tx *sql.Tx, processID string, task string, callbackURL string) (bool, error) {
+	query := "SELECT COUNT(*) FROM subscription WHERE process_id = $1 AND task = $2 AND callback_url = $3"
+	var count int
+	err := tx.QueryRow(query, processID, task, callbackURL).Scan(&count)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
-	defer rows.Close()
-
-	var sessionKeys []string
-	for rows.Next() {
-		var sessionKey string
-		if err := rows.Scan(&sessionKey); err != nil {
-			return nil, err
-		}
-		sessionKeys = append(sessionKeys, sessionKey)
-	}
-
-	return sessionKeys, nil
+	return count > 0, nil
 }
 
 func (r *PostgreSQLNoNoodleWorkflow) addSubscriber(tx *sql.Tx, sessionKey string, healthCheckURL string, task string, processID string, callbackURL string) error {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"no-noodle-workflow-core/msgbroker"
+	"time"
 )
 
 // RedisMessageService now uses Redis lists as a simple message channal instead of pub/sub.
@@ -33,6 +34,23 @@ func (ps *RedisMessageService) SubscribeChannal(ctx context.Context, callbackURL
 
 	fmt.Println("Consuming messages from channal:", channal)
 
+	// Background requeue loop: periodically move expired messages back to main queue
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				if err := ps.broker.RequeueExpired(ctx, channal); err != nil {
+					log.Println("error requeueing expired messages:", err)
+				}
+			}
+		}
+	}()
+
 	for {
 		// Exit if context is cancelled
 		if ctx.Err() != nil {
@@ -40,7 +58,8 @@ func (ps *RedisMessageService) SubscribeChannal(ctx context.Context, callbackURL
 			return
 		}
 
-		payload, err := ps.broker.Dequeue(ctx, channal)
+		// Reserve a message with a visibility timeout
+		payload, err := ps.broker.Dequeue(ctx, channal, 20*time.Second)
 		if err != nil {
 			// If the context was cancelled, just exit
 			if ctx.Err() != nil {
@@ -55,12 +74,17 @@ func (ps *RedisMessageService) SubscribeChannal(ctx context.Context, callbackURL
 			continue
 		}
 
-		log.Printf("Channal %s queued message: %s", channal, string(payload))
 		// Handle the message payload here
 
-		err = handler(callbackURL, payload)
-		if err != nil {
+		if err := handler(callbackURL, payload); err != nil {
 			log.Println("error handling message from channal:", err)
+			// Do not Ack; message will be re-delivered after visibility timeout
+			continue
+		}
+
+		// On successful handling, acknowledge the message so it is not re-delivered
+		if err := ps.broker.Ack(context.Background(), channal, payload); err != nil {
+			log.Println("error acking message from channal:", err)
 		}
 	}
 }
